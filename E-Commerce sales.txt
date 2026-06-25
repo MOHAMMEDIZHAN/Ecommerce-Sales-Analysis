@@ -1,0 +1,75 @@
+#E-Commerce sales
+
+#Find the total sales, total profit, and total number of orders.
+SELECT * FROM ecommerce_sales;
+SELECT ROUND(SUM(Sales),2) AS total_sales, ROUND(SUM(profit),2) AS total_profit, COUNT(ORDER_ID) AS total_orders FROM Ecommerce_sales; 
+
+#Find the top 10 products generating the highest sales.
+SELECT product_name, SUM(Sales) AS Highest_Sales FROM Ecommerce_Sales GROUP BY product_Name ORDER BY Highest_sales DESC LIMIT 10; 
+
+#Show total sales and profit for each region.
+SELECT region, ROUND(SUM(Sales),2) AS total_sales, ROUND(SUM(profit),2) AS total_profit FROM Ecommerce_Sales GROUP BY region;
+
+#Find how many orders were placed using each payment mode.
+SELECT payment_mode, COUNT(*) FROM ecommerce_sales GROUP BY payment_mode;
+
+#Calculate average discount offered in each category.
+SELECT Category, ROUND(AVG(discount),2) AS AVG_discount FROM ecommerce_sales GROUP BY category;
+
+#Top 5 customers by revenue.
+SELECT Customer_Name, ROUND(SUM(sales),2) AS revenue FROM ecommerce_sales GROUP BY 1 ORDER BY revenue DESC LIMIT 5;
+
+#Calculate total sales for every month.
+SELECT MONTHNAME(`ORDER_DATE`) AS MONTHS, ROUND(SUM(SALES),2) AS TOTAL_SALES_BY_MONTH FROM ECOMMERCE_SALES GROUP BY months;
+
+#Find the city with highest total sales.
+select city, ROUND(SUM(sales),2) as total_sales from ecommerce_sales GROUP BY city ORDER BY total_sales DESC LIMIT 1;
+
+#Calculate each category's contribution to total sales.
+SELECT category, ROUND(SUM(sales),2) AS total_sales from ecommerce_sales GROUP BY category;
+
+#Find products whose total quantity sold is greater than average quantity sold across all products.
+SELECT product_name, SUM(quantity) AS total_quantity FROM ecommerce_sales GROUP BY product_name 
+HAVING total_quantity > (SELECT avg(quantity) FROM ecommerce_sales);
+
+#What are the top-performing and lowest-performing products within each distinct business category based on total generated profit?
+SELECT category, product_name, ROUND(SUM(profit),2) AS total_profit, 
+RANK() OVER(PARTITION BY category ORDER BY ROUND(SUM(profit),2) DESC) AS rank1
+FROM ecommerce_sales GROUP BY category, product_name;
+
+#Which specific product ranks as the highest sales generator within each individual product category.
+WITH NEWTABLE AS (
+	SELECT category, product_name, SUM(Sales) AS total_sales,
+    dense_rank() OVER(PARTITION BY category ORDER BY SUM(Sales) DESC) AS sales_rank
+    FROM ecommerce_sales GROUP BY category, product_name
+)
+SELECT category, product_name, total_sales, sales_rank FROM NEWTABLE WHERE sales_rank = 1;
+
+#What is the Month-over-Month (MoM) sales growth rate.
+WITH MONTHLYSALES AS(
+SELECT 
+YEAR(`ORDER_DATE`) AS YEARS,
+MONTH(`ORDER_DATE`) AS MONTHS,
+ROUND(SUM(SALES),2) AS CURRENT_SALE
+FROM ECOMMERCE_SALES
+GROUP BY 1,2
+),
+CALCULATEDSALES AS(
+	SELECT YEARS,
+    MONTHS,
+    CURRENT_SALE,
+    LAG(CURRENT_SALE,1) OVER(ORDER BY YEARS,MONTHS) AS PREVIOUS_SALE
+    FROM MONTHLYSALES
+)
+ SELECT YEARS,MONTHS,
+ROUND(
+((CURRENT_SALE-PREVIOUS_SALE)/NULLIF(PREVIOUS_SALE,0))*100,2
+) AS MOM_GROWTH
+FROM CALCULATEDSALES;
+
+#Find customers whose total sales are greater than the average customer sales.
+WITH customertotal AS (
+	SELECT order_id, customer_name, SUM(sales) AS total_customer_sales FROM ecommerce_sales GROUP BY 1, 2
+)
+SELECT order_id, customer_name, ROUND(total_customer_sales, 2) AS total_sales FROM customertotal WHERE total_customer_sales > 
+(SELECT ROUND(avg(total_customer_sales),2) FROM customertotal) ORDER BY total_sales; 
