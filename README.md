@@ -114,7 +114,11 @@ Through this project, I gained hands-on experience in:
 
 ## 📷 Dashboard Preview
 
-*(Add the dashboard screenshot here)*
+## 📷 Dashboard Preview
+
+<p align="center">
+  <img src="Screenshots/Ecommerce Sales Insights.png" width="1000">
+</p>
 
 ---
 
